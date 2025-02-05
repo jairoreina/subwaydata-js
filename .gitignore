@@ -1,0 +1,13 @@
+#Dependencies
+node_modules/
+package-lock.json
+
+#Environment variables
+.env
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+backend/initial_prompt.txt
+backend/test.js
