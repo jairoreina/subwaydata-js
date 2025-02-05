@@ -1,13 +1,17 @@
 import express from "express";
 import { pool, readOnlyPool, logQuery, logError } from "./db.js";
-import { getFinalSQLQueries, isQuerySafe } from "./utils.js";
+import { getFinalSQLQueries, isQuerySafe } from "./utils/queryUtils.js";
+import { APIError } from './utils/errors.js';
 
 const router = express.Router();
 
 router.post("/query", async (req, res) => {
     const startTime = Date.now();
+    let userQuery;
+    
     try {
-        const { query: userQuery, is_sql_only = false } = req.body;
+        const { query, is_sql_only = false } = req.body;
+        userQuery = query;
         const queryTimestamp = new Date().toISOString();
         
         let generatedSQL;
@@ -27,9 +31,7 @@ router.post("/query", async (req, res) => {
         }
 
         // Check if query is safe
-        if (!isQuerySafe(generatedSQL)) {
-            throw new Error("Generated query is not safe to execute.");
-        }
+        isQuerySafe(generatedSQL);  // Will throw UnauthorizedQueryError if unsafe
 
         // Execute the query
         const queryResult = await readOnlyPool.query(generatedSQL);
@@ -65,14 +67,18 @@ router.post("/query", async (req, res) => {
         // Log the error
         await logError(
             pool,
-            userQuery,
+            userQuery || '',
             errorMessage,
             new Date().toISOString()
-        ).catch(console.error);  // Catch logging errors separately
+        ).catch(console.error);
 
-        // Return appropriate error response
-        res.status(error instanceof Error ? 400 : 500).json({
-            error: errorMessage
+        // Return appropriate error response with status code from custom error
+        const statusCode = error instanceof APIError ? error.status : 500;
+        res.status(statusCode).json({
+            error: {
+                message: errorMessage,
+                details: error instanceof APIError ? error.details : null
+            }
         });
     }
 });
