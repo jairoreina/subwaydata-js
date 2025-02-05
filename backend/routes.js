@@ -1,7 +1,7 @@
 import express from "express";
 import { pool, readOnlyPool, logQuery, logError } from "./db.js";
 import { getFinalSQLQueries, isQuerySafe } from "./utils/queryUtils.js";
-import { APIError } from './utils/errors.js';
+import { APIError, BadRequestError } from './utils/errors.js';
 
 const router = express.Router();
 
@@ -11,6 +11,19 @@ router.post("/query", async (req, res) => {
     
     try {
         const { query, is_sql_only = false } = req.body;
+        
+        // Input validation
+        if (!query || query.trim().length === 0) {
+            throw new BadRequestError('Query cannot be empty');
+        }
+        
+        if (query.length > 500) {
+            throw new BadRequestError('Query is too long. Please limit to 500 characters', {
+                queryLength: query.length,
+                maxLength: 500 // See if this changes with the needs of the project
+            });
+        }
+
         userQuery = query;
         const queryTimestamp = new Date().toISOString();
         
@@ -73,7 +86,7 @@ router.post("/query", async (req, res) => {
         ).catch(console.error);
 
         // Return appropriate error response with status code from custom error
-        const statusCode = error instanceof APIError ? error.status : 500;
+        const statusCode = error instanceof APIError ? error.statusCode : 500;
         res.status(statusCode).json({
             error: {
                 message: errorMessage,
