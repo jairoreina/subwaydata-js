@@ -45,11 +45,13 @@ function App() {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center mb-12">
+            <a href="/">
             <img
               src="src/assets/subwaydata_logo.svg" 
               alt="MTA Data Explorer" 
               className="h-16"
             />
+            </a>
             <Button
             className="ml-auto border border-gray-200 p-1 rounded-xl"
             variant="secondary" 
@@ -87,6 +89,28 @@ function App() {
           isOpen={isAboutOpen} 
           onClose={() => setIsAboutOpen(false)} 
         />
+
+
+        <div className="relative mt-16 bg-gray-50 py-4">
+          <div className="flex flex-col items-center justify-center">
+            <div className="flex items-center justify-center">
+              <p className="text-sm text-gray-500 text-center mb-2">
+                Made by <a href="https://jairoreina.com" className="underline">Jairo Reina</a>
+              </p>
+            </div>
+            <div className="flex items-center justify-center">
+              <p className="text-sm text-gray-500">
+                Find me on:
+              </p>
+              <p className="text-sm text-gray-500 mx-2">
+                <a href="https://github.com/jairoreina" className="underline">GitHub</a>
+              </p>
+              <p className="text-sm text-gray-500 mx-2">
+                <a href="https://www.x.com/jreina9" className="underline">X/Twitter</a>
+              </p>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );
