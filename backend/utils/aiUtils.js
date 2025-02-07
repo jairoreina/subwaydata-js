@@ -15,6 +15,11 @@ const __dirname = path.dirname(__filename);
  * Makes a query to the Gemini LLM to convert natural language to SQL.
  * 
  * @param {string} userQuery - The natural language query from the user
+ * @param {object} [context] - Optional context about previous errors
+ * @param {object} [context.previousError] - Information about the previous error
+ * @param {string} context.previousError.message - The error message
+ * @param {string} context.previousError.code - The Postgres error code
+ * @param {string} context.previousError.invalidSQL - The SQL that caused the error
  * @returns {Promise<Object>} An object containing:
  *   - sql {string} - The generated PostgreSQL query
  *   - stations {Array<Array<string>>|null} - Array of [station, route] tuples, or null if no stations mentioned
@@ -23,8 +28,20 @@ const __dirname = path.dirname(__filename);
  * to generate structured JSON output from the Gemini API containing both the SQL query
  * and any referenced station information.
  */
-async function makeLLMQuery(userQuery) {
+async function makeLLMQuery(userQuery, context = null) {
     const prompt = await fs.readFile(path.join(__dirname, '../initial_prompt.txt'), 'utf-8');
+
+    // Construct the query with error context if available
+    let fullQuery = userQuery;
+    if (context?.previousError) {
+        fullQuery = `Previous query failed with the following error:
+Error message: ${context.previousError.message}
+PostgreSQL error code: ${context.previousError.code}
+Invalid SQL that caused the error: ${context.previousError.invalidSQL}
+
+Please fix the following query considering the error above:
+${userQuery}`;
+    }
 
     const schema = {
         description: "Output containing a valid PostgreSQL query and a list of station tuples.",
@@ -61,7 +78,7 @@ async function makeLLMQuery(userQuery) {
         },
     });
 
-    const result = await model.generateContent(userQuery);
+    const result = await model.generateContent(fullQuery);
     return JSON.parse(result.response.text());
 }
 

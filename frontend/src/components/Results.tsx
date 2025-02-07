@@ -72,9 +72,9 @@ export function Results({ results }: ResultsProps) {
 
     return (
         results.length > 0 && (
-            <section className="mt-8 max-w-5xl mx-auto">
+            <section className="mt-4 max-w-4xl">
                 <h2 className="text-3xl font-semibold mb-4 ml-2">Results</h2>
-                <div className="overflow-hidden rounded-xl border border-gray-200">
+                <div className="overflow-hidden rounded-xl border-2 border-gray-200">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-100">

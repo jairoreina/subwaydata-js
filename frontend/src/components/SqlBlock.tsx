@@ -4,13 +4,14 @@ interface SqlBlockProps {
     sql: string;
     setSql: (sql: string) => void;
     handleSubmit: (e: React.FormEvent, isSqlQuery: boolean) => Promise<void>;
+    // onSaveQuery: () => void;
 }
 
-export const SqlBlock = ({ sql, setSql, handleSubmit }: SqlBlockProps) => {
+export const SqlBlock = ({ sql, setSql, handleSubmit}: SqlBlockProps) => {
     return (
         <div>
             {sql && (
-                <section className="mt-8 max-w-5xl mx-auto">
+                <section className="mt-8 max-w-4xl">
                     <div className="bg-gray-800 rounded-xl shadow p-4">
                         <p className="text-xl font-medium mb-4 text-white">Generated SQL</p>
                         <pre
@@ -31,6 +32,14 @@ export const SqlBlock = ({ sql, setSql, handleSubmit }: SqlBlockProps) => {
                             </Button>
                             <Button variant="secondary" size="sm" className="rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-medium" onClick={(e) => handleSubmit(e, true)}>
                                 Run SQL
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                className="rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-medium ml-auto"
+                                // onClick={onSaveQuery}
+                            >
+                                Save Query
                             </Button>
                         </div>
                     </div>

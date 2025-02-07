@@ -26,6 +26,11 @@ async function correctStationNames(responseJSON) {
     for (const station of responseJSON.stations) {
         const [station_name, route] = station;
         
+        // Skip if station_name is empty but route exists
+        if (!station_name && route) {
+            continue;
+        }
+        
         // Define query based on route presence
         const stationsQuery = route
             ? `
@@ -43,20 +48,23 @@ async function correctStationNames(responseJSON) {
             
             if (stationsList.length === 0) continue;
 
-            const matches = fuzz.extract(
-                station_name, 
-                stationsList, 
-                {
-                    limit: 3,
-                    scorer: fuzz.partial_token_sort_ratio
+            // Only proceed with fuzzy matching if we have a station name
+            if (station_name) {
+                const matches = fuzz.extract(
+                    station_name, 
+                    stationsList, 
+                    {
+                        limit: 3,
+                        scorer: fuzz.partial_token_sort_ratio
+                    }
+                );
+                
+                if (matches && matches[0] && matches[0][0]) {
+                    const bestMatch = matches[0][0];
+                    // Use regex to ensure we only replace the exact station name
+                    const regex = new RegExp(`\\b${station_name}\\b`, 'gi');
+                    responseJSON.sql = responseJSON.sql.replace(regex, bestMatch);
                 }
-            );
-            
-            if (matches && matches[0] && matches[0][0]) {
-                const bestMatch = matches[0][0];
-                // Use regex to ensure we only replace the exact station name
-                const regex = new RegExp(`\\b${station_name}\\b`, 'gi');
-                responseJSON.sql = responseJSON.sql.replace(regex, bestMatch);
             }
         } catch (error) {
             console.error(`Error processing station ${station_name}:`, error);

@@ -7,7 +7,7 @@ interface SearchProps {
   
   export function Search({ query, setQuery, isLoading, onSubmit }: SearchProps) {
     return (
-      <section className="max-w-5xl mx-auto mt-8">
+      <section className="max-w-4xl mt-10">
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="relative">
             <input
@@ -15,7 +15,7 @@ interface SearchProps {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Example: 'What was the busiest station in Queens during January 2024?'"
-              className="w-full p-4 pr-12 border rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full p-4 pr-12 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
             <button
               type="submit"
@@ -29,10 +29,10 @@ interface SearchProps {
               )}
             </button>
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="ml-1 text-sm text-gray-600">
             For better results, if your query mentions a station, follow the station name with at least one train line that services that station.
           </p>
-          <i className="text-sm text-gray-600">
+          <i className="ml-1 text-sm text-gray-600">
             Example: 'What day in 2023 did Bedford Ave (L) have the most ridership?'
           </i>
         </form>

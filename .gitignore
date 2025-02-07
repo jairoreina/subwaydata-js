@@ -11,3 +11,4 @@ Thumbs.db
 
 backend/initial_prompt.txt
 backend/test.js
+*.sql

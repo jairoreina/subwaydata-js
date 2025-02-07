@@ -28,7 +28,7 @@ function getPool(readOnly = false) {
         idleTimeoutMillis: 30000,       // Close idle clients after 30 seconds
         connectionTimeoutMillis: 2000,   // Return error after 2 seconds if connection not established
         statement_timeout: 10000,        // Cancel queries that take more than 10 seconds
-        query_timeout: 5000,            // Timeout for acquiring a client from pool
+        query_timeout: 15000,            // Timeout for acquiring a client from pool
     };
     
     const pool = new pg.Pool(config);
