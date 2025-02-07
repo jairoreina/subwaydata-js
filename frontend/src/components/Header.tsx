@@ -9,7 +9,7 @@ export function Header({ setIsAboutOpen }: { setIsAboutOpen: (isAboutOpen: boole
             <Link to="/" className="text-black hover:text-gray-500 transition-colors text-lg">
                 <img src={logo} alt="Subway Data Logo" className="h-16" />
             </Link>
-            <Button variant="secondary" className="border-2 border-gray-300 rounded-xl" onClick={() => setIsAboutOpen(true)}>
+            <Button variant="secondary" className="border-2 border-gray-200 rounded-xl" onClick={() => setIsAboutOpen(true)}>
                 About
             </Button>
         </div>

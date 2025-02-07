@@ -8,10 +8,12 @@ import { DataOverview } from './components/DataOverview';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { Footer } from './components/Footer';
+import { SaveQueryModal } from './components/SaveQueryModal';
 
 function App() {
   const [query, setQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isNlLoading, setIsNlLoading] = useState(false);
+  const [isSqlLoading, setIsSqlLoading] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [sql, setSql] = useState('');
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -19,6 +21,8 @@ function App() {
   const [isDataOverviewExpanded, setIsDataOverviewExpanded] = useState(false);
   const [shouldCenter, setShouldCenter] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSaveQueryModalOpen, setIsSaveQueryModalOpen] = useState(false);
+  const [sqlToSave, setSqlToSave] = useState('');
 
 
   const handleSubmit = async (e: React.FormEvent, isSqlQuery = false) => {
@@ -26,8 +30,11 @@ function App() {
     const queryToSend = isSqlQuery ? sql : query;
     if (!queryToSend.trim()) return;
 
-    
-    setIsLoading(true);
+    if (isSqlQuery) {
+      setIsSqlLoading(true);
+    } else {
+      setIsNlLoading(true);
+    }
     setError(null);
 
     try {
@@ -57,8 +64,23 @@ function App() {
         details: error.details
       });
     } finally {
-      setIsLoading(false);
+      if (isSqlQuery) {
+        setIsSqlLoading(false);
+      } else {
+        setIsNlLoading(false);
+      }
     }
+  };
+
+  const handleSaveQuery = (title: string) => {
+    // Get existing queries from localStorage
+    const existingQueries = JSON.parse(localStorage.getItem('savedQueries') || '[]');
+    
+    // Add new query
+    const newQueries = [...existingQueries, { title, sql }];
+    
+    // Save back to localStorage
+    localStorage.setItem('savedQueries', JSON.stringify(newQueries));
   };
 
   return (
@@ -75,7 +97,7 @@ function App() {
           
           {/* Search component with its own margin to position it at the middle */}
           <div className={`${shouldCenter && !results.length && !error ? 'my-[1vh]' : 'my-4'}`}>
-            <Search query={query} setQuery={setQuery} isLoading={isLoading} onSubmit={handleSubmit} />
+            <Search query={query} setQuery={setQuery} isLoading={isNlLoading} onSubmit={handleSubmit} />
           </div>
 
           <DataOverview isExpanded={isDataOverviewExpanded} setIsExpanded={setIsDataOverviewExpanded} />
@@ -85,17 +107,30 @@ function App() {
           ) : (
             <>
               {results.length > 0 && <Results results={results} />}
-              {sql && <SqlBlock sql={sql} setSql={setSql} handleSubmit={handleSubmit} />}
+              {sql && (
+                <SqlBlock 
+                  sql={sql} 
+                  setSql={setSql} 
+                  handleSubmit={handleSubmit}
+                  onSaveClick={(currentSql) => {
+                    setSqlToSave(currentSql);
+                    setIsSaveQueryModalOpen(true);
+                  }}
+                  isLoading={isSqlLoading}
+                />
+              )}
             </>
           )}
         </div>
         <Footer />
       </div>
 
-      {/* <div className="flex-1 min-h-screen bg-white border-l border-gray-200 shadow-sm">
-        <div className="m-4 bg-white rounded-lg shadow-sm">
-        </div>
-      </div> */}
+      <SaveQueryModal
+        isOpen={isSaveQueryModalOpen}
+        onClose={() => setIsSaveQueryModalOpen(false)}
+        onSave={handleSaveQuery}
+        sql={sqlToSave}
+      />
       
     </div>
   );
