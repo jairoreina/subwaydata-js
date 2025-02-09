@@ -1,0 +1,7 @@
+{
+    "services": {
+      "frontend": {
+        "source": "frontend"
+      }
+    }
+}  

@@ -9,6 +9,5 @@ package-lock.json
 .DS_Store
 Thumbs.db
 
-backend/initial_prompt.txt
 backend/test.js
 *.sql

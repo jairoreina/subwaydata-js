@@ -10,6 +10,7 @@ import { Sidebar } from './components/Sidebar';
 import { Footer } from './components/Footer';
 import { SaveQueryModal } from './components/SaveQueryModal';
 
+
 function App() {
   const [query, setQuery] = useState('');
   const [isNlLoading, setIsNlLoading] = useState(false);
@@ -38,8 +39,9 @@ function App() {
     }
     setError(null);
 
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_LOCAL_BACKEND_URL;
     try {
-      const response = await fetch('http://localhost:5001/api/query', {
+      const response = await fetch(backendUrl + '/api/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
