@@ -1,5 +1,5 @@
 import express from "express";
-import { pool, readOnlyPool, logQuery, logError } from "./db.js";
+import { writePool, readPool, logQuery, logError } from "./db.js";
 import { getFinalSQLQueries, isQuerySafe, executeQueryWithRetry } from "./utils/queryUtils.js";
 import { APIError, BadRequestError } from './utils/errors.js';
 
@@ -8,68 +8,58 @@ const router = express.Router();
 router.post("/query", async (req, res) => {
     const startTime = Date.now();
     let userQuery;
-    
+
     try {
         const { query, is_sql_only = false } = req.body;
-        
-        // Input validation
+
+        // Validate input
         if (!query || query.trim().length === 0) {
             throw new BadRequestError('Query cannot be empty');
         }
-        
         if (query.length > 500) {
             throw new BadRequestError('Query is too long. Please limit to 500 characters', {
                 queryLength: query.length,
-                maxLength: 500 // See if this changes with the needs of the project
+                maxLength: 500
             });
         }
 
         userQuery = query;
         const queryTimestamp = new Date().toISOString();
         
-        let generatedSQL;
-        let initialResponse = null;
-        let correctedResponse = null;
+        let generatedSQL, initialResponse, correctedResponse;
 
         // Determine the SQL query to execute
         if (is_sql_only) {
             generatedSQL = userQuery;
-            initialResponse = "SQL only mode";
-            correctedResponse = "SQL only mode";
+            initialResponse = correctedResponse = { sql: "SQL only mode" };
         } else {
             const queryResponse = await getFinalSQLQueries(userQuery);
             initialResponse = queryResponse.initialResponse;
             correctedResponse = queryResponse.correctedResponse;
-            generatedSQL = correctedResponse ? correctedResponse.sql : initialResponse.sql;
+            generatedSQL = correctedResponse?.sql || initialResponse.sql;
         }
 
-        // Check if query is safe
-        isQuerySafe(generatedSQL);  // Will throw UnauthorizedQueryError if unsafe
+        // Ensure the query is safe
+        isQuerySafe(generatedSQL);
 
-        // Execute the query
+        // Execute the query using readPool
         const queryResult = await executeQueryWithRetry({
             sql: generatedSQL,
             originalQuery: userQuery,
-            readOnlyPool,
+            readPool,
             isSQLOnly: is_sql_only,
             getFinalSQLQueries
         });
 
-        // console.log("--------------------------------");
-        // console.log("generatedSQL", generatedSQL);
-        // console.log("--------------------------------");
-        // console.log("queryResult", queryResult);
-        // console.log("--------------------------------");
         if (!queryResult.rows || queryResult.rows.length === 0) {
             throw new APIError("The query did not return any results.", 404);
         }
 
         // Log the successful query
         await logQuery(
-            pool,
             userQuery,
-            JSON.stringify(initialResponse),
-            JSON.stringify(correctedResponse),
+            initialResponse,
+            correctedResponse,
             queryResult.rowCount,
             Date.now() - startTime,
             queryTimestamp
@@ -87,22 +77,12 @@ router.post("/query", async (req, res) => {
 
     } catch (error) {
         const errorMessage = error.message || "An unexpected error occurred";
-        
-        // Log the error
-        await logError(
-            pool,
-            userQuery || '',
-            errorMessage,
-            new Date().toISOString()
-        ).catch(console.error, (err) => {
-            console.log("--------------------------------");
-            console.log("error", err);
-            console.log("--------------------------------");
-        });
 
-        // Return appropriate error response with status code from custom error
-        const statusCode = error instanceof APIError ? error.statusCode : 500;
-        res.status(statusCode).json({
+        // Log the error
+        await logError(userQuery || '', errorMessage, new Date().toISOString()).catch(console.error);
+
+        // Return an appropriate error response
+        res.status(error instanceof APIError ? error.statusCode : 500).json({
             error: {
                 message: errorMessage,
                 details: error instanceof APIError ? error.details : null

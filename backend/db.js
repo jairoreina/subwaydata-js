@@ -5,86 +5,75 @@ import { DatabaseError } from './utils/errors.js';
 dotenv.config();
 
 /**
- * Creates and returns a PostgreSQL connection pool with the specified permissions.
- * 
- * @param {boolean} readOnly - Whether to create a read-only pool (true) or read-write pool (false)
+ * Creates and returns a PostgreSQL connection pool.
+ * Uses Railway's DATABASE_URL.
  * @returns {pg.Pool} A configured PostgreSQL connection pool
- * 
- * Uses environment variables to configure the pool:
- * - DB_HOST, DB_PORT, DB_NAME for connection details
- * - For read-only pool: RO_DB_USER, RO_DB_PASSWORD
- * - For read-write pool: DB_USER, DB_PASSWORD
  */
-function getPool(readOnly = false) {
-    const config = {
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        database: process.env.DB_NAME,
-        user: readOnly ? process.env.RO_DB_USER : process.env.DB_USER,
-        password: readOnly ? process.env.RO_DB_PASSWORD : process.env.DB_PASSWORD,
-        
-        // Pool configuration
-        max: 20,                         // Maximum number of clients in pool
-        idleTimeoutMillis: 30000,       // Close idle clients after 30 seconds
-        connectionTimeoutMillis: 2000,   // Return error after 2 seconds if connection not established
-        statement_timeout: 10000,        // Cancel queries that take more than 10 seconds
-        query_timeout: 15000,            // Timeout for acquiring a client from pool
-    };
-    
-    const pool = new pg.Pool(config);
-    
-    // Error handling for the pool
-    pool.on('error', (err, client) => {
-        console.error('Unexpected error on idle client', err);
+function getPool() {
+    return new pg.Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+        max: 20,                         // Max clients in pool
+        idleTimeoutMillis: 30000,        // Close idle clients after 30 sec
+        connectionTimeoutMillis: 2000,   // Return error after 2 sec if not connected
+        statement_timeout: 10000,        // Cancel queries >10 sec
+        query_timeout: 15000             // Timeout for acquiring a client from pool
     });
+}
 
-    return pool;
+// Create separate pools for reading & writing
+const writePool = getPool();  // Standard pool for writes
+const readPool = getPool();   // Read-only pool
+
+/**
+ * Executes a query using the read pool with enforced read-only transaction.
+ * @param {string} query - SQL query string
+ * @param {Array} params - Query parameters
+ * @returns {Promise<Object>} Query results
+ */
+async function readQuery(query, params = []) {
+    const client = await readPool.connect();
+    try {
+        await client.query("BEGIN;");
+        await client.query("SET TRANSACTION READ ONLY;"); // Forces read-only mode
+        const result = await client.query(query, params);
+        await client.query("COMMIT;");
+        return result.rows;
+    } catch (error) {
+        await client.query("ROLLBACK;");
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
 /**
  * Logs details about an executed query to the query_logs table.
- * 
- * @param {pg.Pool} pool - Database connection pool
- * @param {string} userQuery - The original natural language query from the user
- * @param {Object} initialResponseJson - The initial LLM response with SQL and station info
- * @param {Object} correctedResponseJson - Response with corrected station names
- * @param {number} rowCount - Number of rows returned by the query
- * @param {number} executionTimeMs - Query execution time in milliseconds
+ * Uses the writePool to ensure it logs even if readPool fails.
+ * @param {string} userQuery - User's natural language query
+ * @param {Object} initialResponseJson - Initial LLM response
+ * @param {Object} correctedResponseJson - Corrected LLM response
+ * @param {number} rowCount - Number of rows returned
+ * @param {number} executionTimeMs - Query execution time
  * @param {Date} queryTimestamp - When the query was executed
- * @returns {Promise<void>}
- * 
- * Stores query execution details including:
- * - Original user query
- * - Initial and corrected LLM responses
- * - Result statistics (row count, execution time)
- * - Timestamp
  */
-async function logQuery(pool, userQuery, initialResponseJson, correctedResponseJson, rowCount, executionTimeMs, queryTimestamp) {
-    const logEntry = {
-        userQuery: userQuery,
-        initialResponseJson: JSON.stringify(initialResponseJson),
-        correctedResponseJson: JSON.stringify(correctedResponseJson),
-        rowCount: rowCount,
-        executionTimeMs: executionTimeMs,
-        queryTimestamp: queryTimestamp,
-    };
-
+async function logQuery(userQuery, initialResponseJson, correctedResponseJson, rowCount, executionTimeMs, queryTimestamp) {
     const insertQuery = `
         INSERT INTO query_logs (user_query, initial_response_json, corrected_response_json, row_count, execution_time_ms, created_at)
         VALUES ($1, $2, $3, $4, $5, $6)
     `;
 
     const values = [
-        logEntry.userQuery,
-        logEntry.initialResponseJson,
-        logEntry.correctedResponseJson,
-        logEntry.rowCount,
-        logEntry.executionTimeMs,
-        logEntry.queryTimestamp,
+        userQuery,
+        JSON.stringify(initialResponseJson),
+        JSON.stringify(correctedResponseJson),
+        rowCount,
+        executionTimeMs,
+        queryTimestamp
     ];
 
     try {
-        await pool.query(insertQuery, values);
+        await writePool.query(insertQuery, values);
     } catch (error) {
         throw new DatabaseError('Failed to log query', error);
     }
@@ -92,44 +81,24 @@ async function logQuery(pool, userQuery, initialResponseJson, correctedResponseJ
 
 /**
  * Logs error information when a query fails.
- * 
- * @param {pg.Pool} pool - Database connection pool
- * @param {string} userQuery - The original natural language query that failed
- * @param {string} errorMessage - The error message describing what went wrong
+ * Uses the writePool to ensure logging is always available.
+ * @param {string} userQuery - The failed query
+ * @param {string} errorMessage - The error message
  * @param {Date} queryTimestamp - When the error occurred
- * @returns {Promise<void>}
- * 
- * Records error details including:
- * - Failed query
- * - Error message
- * - Timestamp
  */
-async function logError(pool, userQuery, errorMessage, queryTimestamp) {
-    const logEntry = {
-        userQuery: userQuery,
-        errorMessage: errorMessage,
-        queryTimestamp: queryTimestamp,
-    };
-
+async function logError(userQuery, errorMessage, queryTimestamp) {
     const insertQuery = `
         INSERT INTO error_logs (user_query, error_message, created_at)
         VALUES ($1, $2, $3)
     `;
 
-    const values = [
-        logEntry.userQuery,
-        logEntry.errorMessage,
-        logEntry.queryTimestamp,
-    ];
+    const values = [userQuery, errorMessage, queryTimestamp];
 
     try {
-        await pool.query(insertQuery, values);
+        await writePool.query(insertQuery, values);
     } catch (error) {
         throw new DatabaseError('Failed to log error', error);
     }
 }
 
-const pool = getPool(false);
-const readOnlyPool = getPool(true);
-
-export { pool, readOnlyPool, logQuery, logError };
+export { writePool, readPool, readQuery, logQuery, logError };

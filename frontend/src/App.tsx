@@ -25,9 +25,10 @@ function App() {
   const [sqlToSave, setSqlToSave] = useState('');
 
 
-  const handleSubmit = async (e: React.FormEvent, isSqlQuery = false) => {
+  const handleSubmit = async (e: React.FormEvent, isSqlQuery = false, directSql?: string) => {
     e.preventDefault();
-    const queryToSend = isSqlQuery ? sql : query;
+    // Use directSql if provided (from saved queries), otherwise use state
+    const queryToSend = isSqlQuery ? (directSql || sql) : query;
     if (!queryToSend.trim()) return;
 
     if (isSqlQuery) {
@@ -76,21 +77,34 @@ function App() {
     // Get existing queries from localStorage
     const existingQueries = JSON.parse(localStorage.getItem('savedQueries') || '[]');
     
-    // Add new query
-    const newQueries = [...existingQueries, { title, sql }];
+    // Add new query with unique ID
+    const newQuery = {
+      id: crypto.randomUUID(),
+      title,
+      sql: sqlToSave
+    };
+    
+    const newQueries = [newQuery, ...existingQueries];
     
     // Save back to localStorage
     localStorage.setItem('savedQueries', JSON.stringify(newQueries));
+    // Dispatch event to notify sidebar
+    window.dispatchEvent(new Event('savedQueriesUpdated'));
   };
 
   return (
     <div className="flex mx-auto min-h-screen">
 
       {/* Sidebar */}
-      <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+      <Sidebar 
+        isSidebarOpen={isSidebarOpen} 
+        setIsSidebarOpen={setIsSidebarOpen}
+        setSql={setSql}
+        handleSubmit={handleSubmit}
+      />
 
       {/* Main content */}
-      <div className="flex mx-auto flex-col bg-white overflow-auto w-1/2 p-8 pb-2 min-h-screen">
+      <div className="flex mx-auto flex-col bg-white overflow-auto p-8 pb-2 min-h-screen">
         <div className={`flex-grow transition-all duration-500 ease-in-out ${shouldCenter && !results.length && !error ? 'mt-[20vh]' : 'mt-0'}`}>
           <Header setIsAboutOpen={setIsAboutOpen} />
           <AboutCard isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
