@@ -25,7 +25,7 @@ interface SearchProps {
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
               ) : (
-                <img src="/src/assets/search_icon.svg" alt="Search" className="w-5 h-5" />
+                <img src="./src/assets/search_icon.svg" alt="Search" className="w-5 h-5" />
               )}
             </button>
           </div>
