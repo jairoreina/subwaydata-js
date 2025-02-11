@@ -22,7 +22,7 @@ export function AboutCard({ isOpen, onClose }: AboutCardProps) {
   
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
-      <div className="bg-white shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto rounded-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white shadow-lg max-w-2xl w-full p-6 my-8 relative max-h-[80vh] sm:max-h-[90vh] overflow-y-auto rounded-xl" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
