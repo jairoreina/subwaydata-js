@@ -6,9 +6,9 @@ import { AboutCard } from './components/AboutCard';
 import { ErrorMessage } from './components/ErrorMessage';
 import { DataOverview } from './components/DataOverview';
 import { Header } from './components/Header';
-import { Sidebar } from './components/Sidebar';
 import { Footer } from './components/Footer';
 import { SaveQueryModal } from './components/SaveQueryModal';
+import { SavedQueriesCard } from './components/SavedQueryCard';
 
 
 function App() {
@@ -21,9 +21,9 @@ function App() {
   const [error, setError] = useState<{ message: string; details?: any } | null>(null);
   const [isDataOverviewExpanded, setIsDataOverviewExpanded] = useState(false);
   const [shouldCenter, setShouldCenter] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSaveQueryModalOpen, setIsSaveQueryModalOpen] = useState(false);
   const [sqlToSave, setSqlToSave] = useState('');
+  const [isSavedQueriesOpen, setIsSavedQueriesOpen] = useState(false);
 
 
   const handleSubmit = async (e: React.FormEvent, isSqlQuery = false, directSql?: string) => {
@@ -95,24 +95,20 @@ function App() {
     window.dispatchEvent(new Event('savedQueriesUpdated'));
   };
 
+  const handleLoadSavedQuery = (sql: string) => {
+    setSql(sql);
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(syntheticEvent, true, sql);
+  };
+
   return (
     <div className="flex mx-auto min-h-screen">
-
-      {/* Sidebar */}
-      <Sidebar 
-        isSidebarOpen={isSidebarOpen} 
-        setIsSidebarOpen={setIsSidebarOpen}
-        setSql={setSql}
-        handleSubmit={handleSubmit}
-      />
-
-      {/* Main content */}
       <div className="flex mx-auto flex-col bg-white overflow-auto p-8 pb-2 min-h-screen">
-        <div className={`flex-grow transition-all duration-500 ease-in-out ${shouldCenter && !results.length && !error ? 'mt-[20vh]' : 'mt-0'}`}>
-          <Header setIsAboutOpen={setIsAboutOpen} />
-          <AboutCard isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
-          
-          {/* Search component with its own margin to position it at the middle */}
+        <div className={`flex-grow transition-all duration-500 ease-in-out max-w-4xl ${shouldCenter && !results.length && !error ? 'mt-[20vh]' : 'mt-0'}`}>
+          <Header 
+            setIsAboutOpen={setIsAboutOpen} 
+            setIsSavedQueriesOpen={setIsSavedQueriesOpen} 
+          />
           <div className={`${shouldCenter && !results.length && !error ? 'my-[1vh]' : 'my-4'}`}>
             <Search query={query} setQuery={setQuery} isLoading={isNlLoading} onSubmit={handleSubmit} />
           </div>
@@ -142,13 +138,18 @@ function App() {
         <Footer />
       </div>
 
+      <AboutCard isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
+      <SavedQueriesCard 
+        isOpen={isSavedQueriesOpen} 
+        onClose={() => setIsSavedQueriesOpen(false)}
+        onLoadQuery={handleLoadSavedQuery}
+      />
       <SaveQueryModal
         isOpen={isSaveQueryModalOpen}
         onClose={() => setIsSaveQueryModalOpen(false)}
         onSave={handleSaveQuery}
         sql={sqlToSave}
       />
-      
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import subwaydataLogo from '../assets/subwaydata_logo.png';
+import { useEffect } from 'react';
 
 interface AboutCardProps {
   isOpen: boolean;
@@ -6,8 +7,19 @@ interface AboutCardProps {
 }
 
 export function AboutCard({ isOpen, onClose }: AboutCardProps) {
-  if (!isOpen) return null;
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
 
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+  
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
       <div className="bg-white shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto rounded-xl" onClick={(e) => e.stopPropagation()}>

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Button } from './Button';
 
 interface SaveQueryModalProps {
     isOpen: boolean;
@@ -9,6 +10,17 @@ interface SaveQueryModalProps {
 
 export function SaveQueryModal({ isOpen, onClose, onSave, sql }: SaveQueryModalProps) {
     const [title, setTitle] = useState('');
+
+    useEffect(() => {
+        const handleEscape = (event: KeyboardEvent) => {
+          if (event.key === 'Escape' && isOpen) {
+            onClose();
+          }
+        };
+    
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+      }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 
@@ -53,19 +65,21 @@ export function SaveQueryModal({ isOpen, onClose, onSave, sql }: SaveQueryModalP
                     </div>
 
                     <div className="flex justify-end gap-4">
-                        <button
+                        <Button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-xl"
+                            variant="secondary"
+                            className="rounded-xl"
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
-                            className="px-4 py-2 bg-gray-700 text-white rounded-xl hover:bg-gray-500"
+                            variant="primary"
+                            className="rounded-xl bg-gray-800"
                         >
                             Save Query
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </div>
