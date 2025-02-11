@@ -22,6 +22,8 @@ const __dirname = path.dirname(__filename);
 // Define the path to the frontend build folder
 const frontendPath = path.join(__dirname, "../frontend/dist");
 
+app.set("trust proxy", 1);
+
 // Security middleware
 app.use(helmet({
     contentSecurityPolicy: {
