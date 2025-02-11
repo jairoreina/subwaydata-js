@@ -23,7 +23,16 @@ const __dirname = path.dirname(__filename);
 const frontendPath = path.join(__dirname, "../frontend/dist");
 
 // Security middleware
-app.use(helmet());  // Sets security headers
+app.use(helmet(
+    {
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                connectSrc: ["'self'", "https://subwaydata-js-production.up.railway.app", "https://nycsubwaydata.com"],
+            },
+        },
+    }
+));  // Sets security headers
 app.use(cors());    // Enables Cross-Origin Resource Sharing
 app.use(compression());  // Compresses all responses
 

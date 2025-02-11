@@ -1,4 +1,4 @@
-import subwaydataLogo from '../assets/subwaydata_logo.svg';
+import subwaydataLogo from '../assets/subwaydata_logo.png';
 
 interface AboutCardProps {
   isOpen: boolean;
@@ -20,7 +20,7 @@ export function AboutCard({ isOpen, onClose }: AboutCardProps) {
           </svg>
         </button>
         <img src={subwaydataLogo} alt="MTA Logo" className="h-16 mb-4" />
-        <h2 className="text-2xl font-bold mb-4">About MTA Data Explorer</h2>
+        <h2 className="text-2xl font-bold mb-4">About NYC Subway Data Explorer</h2>
         <div className="prose">
             
             <h3 className="text-lg font-semibold">How to use the Data Explorer</h3>

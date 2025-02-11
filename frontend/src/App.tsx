@@ -40,6 +40,7 @@ function App() {
     setError(null);
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_LOCAL_BACKEND_URL;
+
     try {
       const response = await fetch(backendUrl + '/api/query', {
         method: 'POST',
