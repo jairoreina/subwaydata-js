@@ -126,13 +126,13 @@ function App() {
   return (
     <div className="flex mx-auto min-h-screen">
       <div className="flex mx-auto flex-col bg-white overflow-auto p-8 pb-2 min-h-screen">
-        <div className={`flex-grow transition-all duration-500 ease-in-out max-w-4xl ${shouldCenter && !results.length && !error ? 'mt-[20vh]' : 'mt-0'}`}>
+        <div className={`flex-grow transition-all duration-500 ease-in-out max-w-4xl ${shouldCenter && !results.length && !error ? 'sm:mt-[20vh]' : 'mt-0'}`}>
           <Header 
             setIsAboutOpen={setIsAboutOpen} 
             setIsSavedQueriesOpen={setIsSavedQueriesOpen} 
             latestDate={latestDate} 
           />
-          <div className={`${shouldCenter && !results.length && !error ? 'my-[1vh]' : 'my-4'}`}>
+          <div className={`${shouldCenter && !results.length && !error ? 'sm:my-[1vh]' : 'my-4'}`}>
             <Search query={query} setQuery={setQuery} isLoading={isNlLoading} onSubmit={handleSubmit} />
           </div>
 
