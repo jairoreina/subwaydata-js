@@ -9,7 +9,7 @@ interface SearchProps {
   
   export function Search({ query, setQuery, isLoading, onSubmit }: SearchProps) {
     return (
-      <section className="max-w-4xl mt-10">
+      <section className="max-w-4xl mt-8">
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="relative">
             <input

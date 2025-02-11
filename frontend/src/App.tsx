@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search } from './components/Search';
 import { Results } from './components/Results';
 import { SqlBlock } from './components/SqlBlock';
@@ -24,6 +24,28 @@ function App() {
   const [isSaveQueryModalOpen, setIsSaveQueryModalOpen] = useState(false);
   const [sqlToSave, setSqlToSave] = useState('');
   const [isSavedQueriesOpen, setIsSavedQueriesOpen] = useState(false);
+  const [latestDate, setLatestDate] = useState('Loading...');
+
+  useEffect(() => {
+    const fetchLatestDate = async () => {
+      const date = await getLatestDate();
+      setLatestDate(date);
+    };
+    fetchLatestDate();
+  }, []);
+
+  const getLatestDate = async () => {
+    const response = await fetch(import.meta.env.VITE_BACKEND_URL + '/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: 'SELECT TO_CHAR(MAX(transit_timestamp), \'FMMonth DD, YYYY "at" HH12AM\') AS formatted_timestamp FROM ridership',
+        is_sql_only: true,
+      }),
+    });
+    const data = await response.json();
+    return data.data[0].formatted_timestamp;
+  };
 
 
   const handleSubmit = async (e: React.FormEvent, isSqlQuery = false, directSql?: string) => {
@@ -108,6 +130,7 @@ function App() {
           <Header 
             setIsAboutOpen={setIsAboutOpen} 
             setIsSavedQueriesOpen={setIsSavedQueriesOpen} 
+            latestDate={latestDate} 
           />
           <div className={`${shouldCenter && !results.length && !error ? 'my-[1vh]' : 'my-4'}`}>
             <Search query={query} setQuery={setQuery} isLoading={isNlLoading} onSubmit={handleSubmit} />

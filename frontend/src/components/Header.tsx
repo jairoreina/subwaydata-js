@@ -4,10 +4,12 @@ import { Button } from './Button';
 
 export function Header({ 
   setIsAboutOpen, 
-  setIsSavedQueriesOpen 
+  setIsSavedQueriesOpen,
+  latestDate
 }: { 
   setIsAboutOpen?: (isOpen: boolean) => void;
   setIsSavedQueriesOpen?: (isOpen: boolean) => void;
+  latestDate: string;
 }) {
   return (
     <header className="flex flex-col">
@@ -34,7 +36,9 @@ export function Header({
       </div>
       <div className="flex flex-col">
         <p className="text-4xl font-semibold text-left mb-1">Ask any question about NYC Subway Data.</p>
-        <p className="text-xl font-normal text-left">Ridership data for every station, down to the hour.</p>
+        <p className="text-xl font-normal text-left mb-1">Ridership data for every station, down to the hour.</p>
+        <p className="text-sm font- text-left text-gray-500">Latest available data: {latestDate}</p>
+        <p className="text-sm font- text-left text-gray-500">Coming soon: data starting from 2020 and graph generation!</p>
       </div>
     </header>
   );
