@@ -72,7 +72,7 @@ export function Results({ results }: ResultsProps) {
 
     return (
         results.length > 0 && (
-            <section className="mt-4 max-w-4xl">
+            <section className="mt-3 max-w-4xl">
                 <h2 className="text-3xl font-semibold mb-4 ml-2">Results</h2>
                 <div className="overflow-hidden rounded-xl border-2 border-gray-200">
                     <div className="overflow-x-auto">
