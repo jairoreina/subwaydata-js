@@ -23,17 +23,26 @@ const __dirname = path.dirname(__filename);
 const frontendPath = path.join(__dirname, "../frontend/dist");
 
 // Security middleware
-app.use(helmet(
-    {
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                connectSrc: ["'self'", "https://subwaydata-js-production.up.railway.app", "https://nycsubwaydata.com"],
-            },
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            connectSrc: ["'self'", "https://subwaydata-js-production.up.railway.app", "https://nycsubwaydata.com"],
         },
-    }
-));  // Sets security headers
-app.use(cors());    // Enables Cross-Origin Resource Sharing
+    },
+}));
+
+// Enable CORS with specific options
+app.use(cors({
+    origin: [
+        'https://nycsubwaydata.com',
+        'http://localhost:5173',  // Your local frontend
+        'http://localhost:5001',  // Your local backend
+    ],
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type'],
+}));
+
 app.use(compression());  // Compresses all responses
 
 // Request parsing middleware
@@ -50,6 +59,11 @@ app.use(express.static(frontendPath));
 // Health check endpoint
 app.get("/api", (req, res) => {
     res.send("Subway data API is running");
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
 });
 
 // Serve frontend for all other routes
